@@ -31,11 +31,11 @@ const makeRouterDriver = (routerOptions, options = {}) => {
 
   const createDriverRouter = router => {
     const driverRouter = {}
-    const createReq$ = (m, path) => {
+    const createReq$ = (method, path) => {
       const req$ = xs.create({
         id: cuid(),
         start: listener => {
-          router[m](path, (req, res, next) => {
+          router[method](path, (req, res, next) => {
             req.id = this.id
             _requests[this.id] = { req, res }
             listener.next(req)
@@ -47,8 +47,8 @@ const makeRouterDriver = (routerOptions, options = {}) => {
       return req$
     }
 
-    methods.concat('all').forEach(m => {
-      driverRouter[m] = (path) => createReq$(m, path)
+    methods.concat('all').forEach(method => {
+      driverRouter[method] = (path) => createReq$(method, path)
     })
 
     driverRouter.method = createReq$
