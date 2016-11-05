@@ -1,4 +1,4 @@
-const Rx = require('rxjs/Rx')
+const xs = require('xstream').default
 const express = require('express')
 const cuid = require('cuid')
 const methods = require('methods')
@@ -17,51 +17,52 @@ var terminateMethods = [
   'sendStatus'
 ]
 
-var terminateMethodsMap = terminateMethods
-  .reduce((methods, m) => {
-    methods[m] = true
-    return methods
-  }, {})
+var terminateMethodsMap = terminateMethods.reduce((methods, m) => {
+  methods[m] = true
+  return methods
+}, {})
 
-const isExpressRouter = (router) => router && typeof router.use === 'function'
+const isExpressRouter = router => router && typeof router.use === 'function'
 
 const makeRouterDriver = (routerOptions, options = {}) => {
-  const router = isExpressRouter(routerOptions)
-    ? routerOptions : Router(routerOptions)
+  const router = isExpressRouter(routerOptions) ? routerOptions : Router(routerOptions)
 
   let _requests = {}
 
-  const createDriverRouter = (router) => {
+  const createDriverRouter = router => {
     const driverRouter = {}
     const createReq$ = (m, path) => {
-
-      let req$ = Rx.Observable.create(observer => {
-        router[m](path, (req, res, next) => {
-          var id = req.id || cuid()
-          _requests[id] = {
-            req: req,
-            res: res
-          }
-          req.id = id
-          observer.next(req)
-        })
+      const req$ = xs.create({
+        id: cuid(),
+        start: listener => {
+          router[m](path, (req, res, next) => {
+            req.id = this.id
+            _requests[this.id] = { req, res }
+            listener.next(req)
+          })
+        },
+        stop: () => {}
       })
 
       return req$
     }
+
     methods.concat('all').forEach(m => {
       driverRouter[m] = (path) => createReq$(m, path)
     })
+
     driverRouter.method = createReq$
+
     driverRouter.route = (path, options) => {
       let nestedRouter = Router()
       router.use(path, nestedRouter)
       return createDriverRouter(nestedRouter, options || routerOptions)
     }
+
     return driverRouter
   }
 
-  const handle = (response) => {
+  const handle = response => {
     var _r = _requests[response.id]
     if (_r) {
       let res = _r.res
@@ -87,7 +88,7 @@ const makeRouterDriver = (routerOptions, options = {}) => {
       throw new Error(`request with id ${response.id} not found`)
     }
   }
-  return (response$) => {
+  return response$ => {
     response$.forEach(handle)
     return createDriverRouter(router)
   }
