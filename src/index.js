@@ -1,7 +1,9 @@
-import {Observable} from 'rx'
-import {Router} from 'express'
-import cuid from 'cuid'
-import methods from 'methods'
+const Rx = require('rxjs/Rx')
+const express = require('express')
+const cuid = require('cuid')
+const methods = require('methods')
+
+const Router = express.Router
 
 var terminateMethods = [
   'download',
@@ -23,8 +25,8 @@ var terminateMethodsMap = terminateMethods
 
 const isExpressRouter = (router) => router && typeof router.use === 'function'
 
-export const makeRouterDriver = (routerOptions, options = {}) => {
-  const router = isExpressRouter(routerOptions) 
+const makeRouterDriver = (routerOptions, options = {}) => {
+  const router = isExpressRouter(routerOptions)
     ? routerOptions : Router(routerOptions)
 
   let _requests = {}
@@ -32,7 +34,8 @@ export const makeRouterDriver = (routerOptions, options = {}) => {
   const createDriverRouter = (router) => {
     const driverRouter = {}
     const createReq$ = (m, path) => {
-      let req$ = Observable.create(observer => {
+
+      let req$ = Rx.Observable.create(observer => {
         router[m](path, (req, res, next) => {
           var id = req.id || cuid()
           _requests[id] = {
@@ -40,10 +43,10 @@ export const makeRouterDriver = (routerOptions, options = {}) => {
             res: res
           }
           req.id = id
-          observer.onNext(req)
+          observer.next(req)
         })
-      }).replay(null, 1)
-      req$.connect()
+      })
+
       return req$
     }
     methods.concat('all').forEach(m => {
@@ -89,3 +92,5 @@ export const makeRouterDriver = (routerOptions, options = {}) => {
     return createDriverRouter(router)
   }
 }
+
+module.exports = makeRouterDriver
