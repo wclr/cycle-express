@@ -1,4 +1,4 @@
-const xs = require('xstream').default
+const Rx = require('rxjs/Rx')
 const express = require('express')
 const cuid = require('cuid')
 const methods = require('methods')
@@ -32,16 +32,12 @@ const makeRouterDriver = (routerOptions, options = {}) => {
   const createDriverRouter = router => {
     const driverRouter = {}
     const createReq$ = (method, path) => {
-      const req$ = xs.create({
-        start: listener => {
-          router[method](path, (req, res, next) => {
-            const id = cuid()
-            req.id = id
-            requestsStore[id] = { req, res }
-            listener.next(req)
-          })
-        },
-        stop: () => {}
+      const req$ = Rx.Observable.create(o => {
+        router[method](path, (req, res, next) => {
+          req.id = cuid()
+          requestsStore[req.id] = { req, res }
+          o.next(req)
+        })
       })
 
       return req$
@@ -63,7 +59,7 @@ const makeRouterDriver = (routerOptions, options = {}) => {
   }
 
   return outgoing$ => {
-    outgoing$.addListener({
+    outgoing$.subscribe({
       next: response => {
         const _r = requestsStore[response.id]
 
