@@ -27,16 +27,10 @@ Method `route` internally will create new `express.Router`
 and `use` (attach) it on current `Router` instance that will supply you with kind of *isolated* stream of request
 from the `path`.
 
+ ```js
+let nestedRouter = router.route(path) // --> nested router attached on `path`
+nestedRouter.METHOD(path) // -> stream of requests
  ```
- let nestedRouter = router.route(path) // --> nested router attached on `path`
- nestedRouter.METHOD(path) // -> stream of requests
- ```
-
-You can use this to pass such nested router to function:
-
-```js
-RouteUser({router: router.route('/api/user'), db, log})
-```
 
 **streams of responses**
 
@@ -53,7 +47,6 @@ object. So, such object passed to router sink steam:
 ```
 
 will set response `status` to `202` and send (calling `send` method on express's `res` object) `{a: 1, b: 2}`
-
 
 
 ## Example
