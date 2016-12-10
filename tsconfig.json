@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    "module": "commonjs",
+    "strictNullChecks": true,
+    "target": "es6",
+    "outDir": "built"
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
