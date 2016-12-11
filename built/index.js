@@ -2,7 +2,6 @@
 const cuid = require("cuid");
 const express = require("express");
 const methods = require("methods");
-const xstream_1 = require("xstream");
 const noop = () => undefined;
 const terminateRequestWithMethodsMap = [
     'download',
@@ -19,20 +18,16 @@ const terminateRequestWithMethodsMap = [
     return obj;
 }, {});
 const requestsStore = {};
-const createRouterStream = (router) => {
+const createRouterStream = (router, streamAdapter) => {
     const driverRouter = {};
     const createRouteStream = (method, path) => {
-        const req$ = xstream_1.default.create({
-            start: (listener) => {
-                router[method](path, (req, res) => {
-                    const request = Object.assign({ id: cuid(), locals: {} }, req);
-                    requestsStore[request.id] = { req: request, res };
-                    listener.next(request);
-                });
-            },
-            stop: noop
+        const { stream, observer } = streamAdapter.makeSubject();
+        router[method](path, (req, res) => {
+            const request = Object.assign({ id: cuid(), locals: {} }, req);
+            requestsStore[request.id] = { req: request, res };
+            observer.next(request);
         });
-        return req$;
+        return stream;
     };
     methods.concat('all').forEach((method) => {
         driverRouter[method] = (path) => createRouteStream(method, path);
@@ -40,7 +35,7 @@ const createRouterStream = (router) => {
     driverRouter.route = (path) => {
         let nestedRouter = express.Router();
         router.use(path, nestedRouter);
-        return createRouterStream(nestedRouter);
+        return createRouterStream(nestedRouter, streamAdapter);
     };
     return driverRouter;
 };
@@ -75,6 +70,6 @@ exports.makeRouterDriver = (router) => {
                 }
             }
         });
-        return createRouterStream(router);
+        return createRouterStream(router, streamAdapter);
     };
 };

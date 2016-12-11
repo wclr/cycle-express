@@ -1,8 +1,9 @@
-import {Observer, StreamAdapter, Subject} from '@cycle/base'
+import {StreamAdapter, Subject} from '@cycle/base'
+import {CycleExpress} from '../typings/index.d'
+
 import * as cuid from 'cuid'
 import * as express from 'express'
 import * as methods from 'methods'
-import xs from 'xstream'
 
 const noop = () => undefined
 
@@ -23,39 +24,36 @@ const terminateRequestWithMethodsMap = [
 
 const requestsStore: RequestsStore = {}
 
-const createRouterStream = (router: express.Router): RouterStream => {
+const createRouterStream: CreateRouterStream = (router, streamAdapter) => {
   const driverRouter: any = {}
-  const createRouteStream = (method: string, path: Path) => {
-    const req$ = xs.create({
-      start: (listener) => {
-        router[method](path, (req: express.Request, res: express.Response) => {
-          const request = <Request>Object.assign({ id: cuid(), locals: {} }, req)
-          requestsStore[request.id] = { req: request, res }
-          listener.next(request)
-        })
-      },
-      stop: noop
+  const createRouteStream: CreateRouteStream = (method, path) => {
+    const {stream, observer} = streamAdapter.makeSubject()
+
+    router[method](path, (req: express.Request, res: express.Response) => {
+      const request = <CycleExpress.Request>Object.assign({ id: cuid(), locals: {} }, req)
+      requestsStore[request.id] = { req: request, res }
+      observer.next(request)
     })
 
-    return req$
+    return stream
   }
 
   methods.concat('all').forEach((method: string) => {
-    driverRouter[method] = (path: Path) => createRouteStream(method, path)
+    driverRouter[method] = (path: CycleExpress.Path) => createRouteStream(method, path)
   })
 
-  driverRouter.route = (path: Path) => {
+  driverRouter.route = (path: CycleExpress.Path) => {
     let nestedRouter = express.Router()
     router.use(path, nestedRouter)
-    return createRouterStream(nestedRouter)
+    return createRouterStream(nestedRouter, streamAdapter)
   }
 
-  return <RouterStream>driverRouter
+  return <CycleExpress.RouterStream>driverRouter
 }
 
-export const makeRouterDriver: MakeRouterDriver = (router) => {
+export const makeRouterDriver: CycleExpress.MakeRouterDriver = (router) => {
   return (outgoing$, streamAdapter) => {
-    streamAdapter.streamSubscribe<Response>(outgoing$, {
+    streamAdapter.streamSubscribe<CycleExpress.Response>(outgoing$, {
       complete: noop,
       error: noop,
       next: (response) => {
@@ -85,38 +83,21 @@ export const makeRouterDriver: MakeRouterDriver = (router) => {
       }
     })
 
-    return createRouterStream(router)
+    return createRouterStream(router, streamAdapter)
   }
 }
 
-type Path = string | RegExp
+interface CreateRouteStream {
+  (method: string, path: CycleExpress.Path): Subject<CycleExpress.Request>
+}
+
+interface CreateRouterStream {
+  (router: express.Router, streamAdapter: StreamAdapter): CycleExpress.RouterStream
+}
 
 interface RequestsStore {
   [prop: string]: {
-    req: Request,
+    req: CycleExpress.Request,
     res: express.Response
   }
-}
-
-interface Request extends express.Request {
-  id: string
-  locals: any
-}
-
-interface Response {
-  id: string
-  status?: number
-  send: any
-}
-
-interface RouterStream {
-  route: (path: Path) => RouterStream
-  get: (path: Path) => Observer<Response>
-  post: (path: Path) => Observer<Response>
-  put: (path: Path) => Observer<Response>
-  delete: (path: Path) => Observer<Response>
-}
-
-export interface MakeRouterDriver {
-  (router: express.Router): (outgoing$: Subject<Response>, SA: StreamAdapter) => RouterStream
 }
