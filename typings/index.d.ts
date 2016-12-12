@@ -1,33 +1,26 @@
 import {Observer, StreamAdapter, Subject} from '@cycle/base'
+import {RouterStreamTemplate} from './router-stream.d'
 import * as express from 'express'
 
-export const makeRouterDriver: CycleExpress.MakeRouterDriver
+type GenericStream = any
+export type RoutePath = string | RegExp
 
-export namespace CycleExpress {
-  type Path = string | RegExp
+export declare function makeRouterDriver(router: express.Router): Function;
 
-  interface RouterStream {
-    route: (path: Path) => RouterStream
-    get: (path: Path) => Observer<Response>
-    post: (path: Path) => Observer<Response>
-    put: (path: Path) => Observer<Response>
-    delete: (path: Path) => Observer<Response>
-  }
+export interface RouterStream extends RouterStreamTemplate<GenericStream> { }
 
-  interface Request extends express.Request {
-    id: string
-    locals: any
-  }
+export interface Request extends express.Request {
+  id: string
+  locals: any
+}
 
-  interface Response {
-    id: string
-    status?: number
-    send: any
-  }
+export interface Response {
+  id: string
+  status?: number
+  send: any
+}
 
-  interface MakeRouterDriver {
-    (router: express.Router):
-      (outgoing$: Subject<CycleExpress.Response>, SA: StreamAdapter) =>
-        CycleExpress.RouterStream
-  }
+export interface MakeRouterDriver {
+  (router: express.Router):
+    (outgoing$: Subject<Response>, SA: StreamAdapter) => RouterStream
 }

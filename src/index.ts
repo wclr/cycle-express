@@ -1,5 +1,5 @@
 import {StreamAdapter, Subject} from '@cycle/base'
-import {CycleExpress} from '../typings/index.d'
+import * as CycleExpress from '../typings/index.d'
 
 import * as cuid from 'cuid'
 import * as express from 'express'
@@ -39,10 +39,10 @@ const createRouterStream: CreateRouterStream = (router, streamAdapter) => {
   }
 
   methods.concat('all').forEach((method: string) => {
-    driverRouter[method] = (path: CycleExpress.Path) => createRouteStream(method, path)
+    driverRouter[method] = (path: CycleExpress.RoutePath) => createRouteStream(method, path)
   })
 
-  driverRouter.route = (path: CycleExpress.Path) => {
+  driverRouter.route = (path: CycleExpress.RoutePath) => {
     let nestedRouter = express.Router()
     router.use(path, nestedRouter)
     return createRouterStream(nestedRouter, streamAdapter)
@@ -88,7 +88,7 @@ export const makeRouterDriver: CycleExpress.MakeRouterDriver = (router) => {
 }
 
 interface CreateRouteStream {
-  (method: string, path: CycleExpress.Path): Subject<CycleExpress.Request>
+  (method: string, path: CycleExpress.RoutePath): Subject<CycleExpress.Request>
 }
 
 interface CreateRouterStream {

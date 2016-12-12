@@ -1,6 +1,6 @@
 {
   "name": "cycle-express",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Cycle driver for express framework",
   "main": "built/index.js",
   "typings": "typings/index.d.ts",
@@ -11,7 +11,8 @@
   },
   "scripts": {
     "lint": "tslint -c tslint.json **/*.ts",
-    "build": "tsc -p ."
+    "clean": "rm -rf built || :",
+    "build": "yarn run clean && tsc -p ."
   },
   "dependencies": {
     "@cycle/base": "^4.2.0",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "express": "*",
+    "rxjs": "^5.0.0-rc.5",
     "tslint": "^4.0.2",
     "typescript": "^2.1.4"
   }
