@@ -23,7 +23,8 @@ const createRouterStream = (router, streamAdapter) => {
     const createRouteStream = (method, path) => {
         const { stream, observer } = streamAdapter.makeSubject();
         router[method](path, (req, res) => {
-            const request = Object.assign({ id: cuid(), locals: {} }, req);
+            const request = Object.assign({ id: cuid() }, req);
+            request.locals = request.locals || {};
             requestsStore[request.id] = { req: request, res };
             observer.next(request);
         });

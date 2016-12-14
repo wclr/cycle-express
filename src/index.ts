@@ -30,7 +30,8 @@ const createRouterStream: CreateRouterStream = (router, streamAdapter) => {
     const {stream, observer} = streamAdapter.makeSubject()
 
     router[method](path, (req: express.Request, res: express.Response) => {
-      const request = <CycleExpress.Request>Object.assign({ id: cuid(), locals: {} }, req)
+      const request = <CycleExpress.Request>Object.assign({ id: cuid() }, req)
+      request.locals = request.locals || {}
       requestsStore[request.id] = { req: request, res }
       observer.next(request)
     })
