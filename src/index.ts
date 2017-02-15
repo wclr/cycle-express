@@ -57,7 +57,7 @@ const createRouterStream = (router, streamAdapter) => {
 
     router[method](path, (req: express.Request, res: express.Response) => {
       const request = Object.assign({
-        id: cuid(),
+        id: cuid()
       }, req) as Request
 
       request.locals = request.locals || {}
@@ -74,12 +74,12 @@ const createRouterStream = (router, streamAdapter) => {
   })
 
   driverRouter.route = (path: RoutePath) => {
-    let nestedRouter = express.Router()
+    const nestedRouter = express.Router()
     router.use(path, nestedRouter)
     return createRouterStream(nestedRouter, streamAdapter)
   }
 
-  return <RouterSource>driverRouter
+  return driverRouter as RouterSource
 }
 
 export const makeRouterDriver = (router: express.Router) => {
@@ -97,7 +97,7 @@ export const makeRouterDriver = (router: express.Router) => {
         let terminateRequestWith: string | undefined
         const methods: string[] = []
 
-        for (let key in response) {
+        for (const key in response) {
           if (typeof res[key] === 'function') {
             if (terminateRequestWithMethodsMap[key]) {
               terminateRequestWith = key

@@ -1,4 +1,4 @@
 declare module 'methods' {
-  let a: any
+  const a: any
   export = a
 }
