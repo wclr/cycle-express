@@ -5,9 +5,14 @@
     "module": "commonjs",
     "strictNullChecks": true,
     "target": "es6",
-    "outDir": "built"
+    "outDir": "built",
+    "declaration": true,
+    "declarationDir": "./"
   },
   "exclude": [
     "node_modules"
+  ],
+  "include": [
+    "src/index.ts"
   ]
 }

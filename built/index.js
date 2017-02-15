@@ -23,7 +23,9 @@ const createRouterStream = (router, streamAdapter) => {
     const createRouteStream = (method, path) => {
         const { stream, observer } = streamAdapter.makeSubject();
         router[method](path, (req, res) => {
-            const request = Object.assign({ id: cuid() }, req);
+            const request = Object.assign({
+                id: cuid(),
+            }, req);
             request.locals = request.locals || {};
             requestsStore[request.id] = { req: request, res };
             observer.next(request);
@@ -41,7 +43,7 @@ const createRouterStream = (router, streamAdapter) => {
     return driverRouter;
 };
 exports.makeRouterDriver = (router) => {
-    return (outgoing$, streamAdapter) => {
+    const driverFunction = (outgoing$, streamAdapter) => {
         streamAdapter.streamSubscribe(outgoing$, {
             complete: noop,
             error: noop,
@@ -73,4 +75,5 @@ exports.makeRouterDriver = (router) => {
         });
         return createRouterStream(router, streamAdapter);
     };
+    return driverFunction;
 };

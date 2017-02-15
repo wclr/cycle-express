@@ -1,5 +1,6 @@
-import {Observable} from 'rxjs'
-import {Request} from './typings/index'
-import {RouterStreamTemplate} from './typings/router-stream'
+import { Observable } from 'rxjs'
 
-export interface RouterStream extends RouterStreamTemplate<Observable<Request>> { }
+import { RouterSourceTemplate } from './index.d'
+
+export * from './index.d'
+export type RouterSource = RouterSourceTemplate<Observable<Request>>
