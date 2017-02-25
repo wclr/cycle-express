@@ -1,4 +1,4 @@
 declare module 'methods' {
-  const a: any
-  export = a
+  const a: any;
+  export = a;
 }

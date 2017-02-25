@@ -2,8 +2,8 @@ declare module 'cuid' {
   /**
    * Returns a short random string
    */
-  type Generate = () => string
+  type Generate = () => string;
 
-  const a: Generate
-  export = a
+  const a: Generate;
+  export = a;
 }

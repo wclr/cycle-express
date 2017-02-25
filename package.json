@@ -10,7 +10,8 @@
   "scripts": {
     "lint": "tslint -c tslint.json **/*.ts",
     "clean": "rm -rf built || :",
-    "build": "yarn run clean && tsc -p ."
+    "build": "yarn run clean && tsc -p .",
+    "watch": "tsc -p . --watch"
   },
   "dependencies": {
     "@cycle/base": "^4.3.0",
