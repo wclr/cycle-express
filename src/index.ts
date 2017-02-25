@@ -91,7 +91,8 @@ export const makeRouterDriver = (router: express.Router) => {
                 const { res } = requestsStore[response.id];
 
                 if (!res) {
-                    throw new Error(`request with id ${response.id} not found`);
+                    console.warn(`request with id ${response.id} not found`);
+                    return;
                 }
 
                 let terminateRequestWith: string | undefined;
