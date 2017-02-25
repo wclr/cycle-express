@@ -48,11 +48,11 @@ exports.makeRouterDriver = (router) => {
             complete: noop,
             error: noop,
             next: (response) => {
-                const { res } = requestsStore[response.id];
-                if (!res) {
+                if (!requestsStore[response.id]) {
                     console.warn(`request with id ${response.id} not found`);
                     return;
                 }
+                const { res } = requestsStore[response.id];
                 let terminateRequestWith;
                 const methods = [];
                 for (const key in response) {
