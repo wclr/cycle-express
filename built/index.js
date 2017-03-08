@@ -1,8 +1,10 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const adapt_1 = require("@cycle/run/lib/adapt");
 const cuid = require("cuid");
 const express = require("express");
 const methods = require("methods");
-const noop = () => undefined;
+const xstream_1 = require("xstream");
 const terminateRequestWithMethodsMap = [
     'download',
     'end',
@@ -18,19 +20,23 @@ const terminateRequestWithMethodsMap = [
     return obj;
 }, {});
 const requestsStore = {};
-const createRouterStream = (router, streamAdapter) => {
+const createRouterSource = (router) => {
     const driverRouter = {};
     const createRouteStream = (method, path) => {
-        const { stream, observer } = streamAdapter.makeSubject();
-        router[method](path, (req, res) => {
-            const request = Object.assign({
-                id: cuid()
-            }, req);
-            request.locals = request.locals || {};
-            requestsStore[request.id] = { req: request, res };
-            observer.next(request);
+        const incoming$ = xstream_1.default.create({
+            start: (listener) => {
+                router[method](path, (req, res) => {
+                    const request = Object.assign({
+                        id: cuid()
+                    }, req);
+                    request.locals = request.locals || {};
+                    requestsStore[request.id] = { req: request, res };
+                    listener.next(request);
+                });
+            },
+            stop: () => { }
         });
-        return stream;
+        return adapt_1.adapt(incoming$);
     };
     methods.concat('all').forEach((method) => {
         driverRouter[method] = (path) => createRouteStream(method, path);
@@ -38,15 +44,13 @@ const createRouterStream = (router, streamAdapter) => {
     driverRouter.route = (path) => {
         const nestedRouter = express.Router();
         router.use(path, nestedRouter);
-        return createRouterStream(nestedRouter, streamAdapter);
+        return createRouterSource(nestedRouter);
     };
     return driverRouter;
 };
 exports.makeRouterDriver = (router) => {
-    const driverFunction = (outgoing$, streamAdapter) => {
-        streamAdapter.streamSubscribe(outgoing$, {
-            complete: noop,
-            error: noop,
+    const driverFunction = (outgoing$) => {
+        outgoing$.addListener({
             next: (response) => {
                 if (!requestsStore[response.id]) {
                     console.warn(`request with id ${response.id} not found`);
@@ -74,7 +78,7 @@ exports.makeRouterDriver = (router) => {
                 }
             }
         });
-        return createRouterStream(router, streamAdapter);
+        return createRouterSource(router);
     };
     return driverFunction;
 };

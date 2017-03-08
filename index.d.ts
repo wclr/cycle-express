@@ -1,6 +1,7 @@
 /// <reference types="express" />
-import { DriverFunction } from '@cycle/base';
+import { Driver } from '@cycle/run';
 import * as express from 'express';
+import xs from 'xstream';
 export declare type RoutePath = string | RegExp;
 export interface RouterSourceTemplate<T> {
     route: (path: RoutePath) => RouterSourceTemplate<T>;
@@ -19,4 +20,4 @@ export interface Response {
     status?: number;
     send: any;
 }
-export declare const makeRouterDriver: (router: express.Router) => DriverFunction;
+export declare const makeRouterDriver: (router: express.Router) => Driver<xs<Response>, RouterSourceTemplate<any>>;
